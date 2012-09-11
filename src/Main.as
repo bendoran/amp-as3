@@ -18,7 +18,7 @@ package{
 			ampClient.ask('Sum',{a:10,b:20});
 			ampClient.ask('Sum',{a:30,b:70});
 			ampClient.ask('Sum',{a:15,b:30});
-			ampClient.ask('Sum',{a:2,b:8});
+			ampClient.ask('Sum',{a:22,b:80});
 		}
 		
 	}
