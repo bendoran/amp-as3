@@ -37,24 +37,16 @@ package co.uk.bdoran.AMP {
 			var data : String = "";
 			var argsArray : Array = this.objectToArray( args );
 
-			argsArray.unshift( { key : "_command", value : command } );
-			argsArray.unshift( { key : "_ask", value : questionCounter } );
+			argsArray.push( { key : "_command", value : command } );
+			argsArray.push( { key : "_ask", value : questionCounter } );
 			
 			for each(  var object : Object in argsArray ){
-				data += object.key.length;
-				data += object.key;
-				data += object.value.toString().length;
-				data += object.value;
+				socket.writeUTF( object.key );
+				socket.writeUTF( object.value );
 			}
-			
-			var utfBytes : ByteArray = new ByteArray();
-			utfBytes.writeUTFBytes( data );
-			utfBytes.position = 0;
-			
-			while ( utfBytes.bytesAvailable ) {
-				this.socket.writeByte( utfBytes.readByte() );
-			}
-			this.socket.writeShort( 0x00 );
+			socket.writeByte(0x00);
+			socket.writeByte(0x00);
+			socket.flush();
 		}
 		
 		private function objectToArray( args : Object ) : Array{
@@ -85,8 +77,8 @@ package co.uk.bdoran.AMP {
 		}
 
 		private function socketDataHandler (event : ProgressEvent) : void {
-			if ( socket.bytesAvailable > 0 ){
-				trace("IN: " + socket.readUTFBytes( socket.bytesAvailable ) );
+			while ( socket.bytesAvailable > 0 ){
+				trace("IN: " + socket.readUTF() );
 			}
 		}
 	}
