@@ -14,11 +14,19 @@ package{
 			ampClient.addEventListener( AMPEvent.AMP_CONNECTED, ampConnectedHandler ) 
 		}
 		
-		protected function ampConnectedHandler( event:AMPEvent ):void {event
-			ampClient.ask('Sum',{a:10,b:20});
-			ampClient.ask('Sum',{a:30,b:70});
-			ampClient.ask('Sum',{a:15,b:30});
-			ampClient.ask('Sum',{a:22,b:80});
+		private function ampConnectedHandler( event:AMPEvent ):void {event
+			ampClient.ask( 'Sum', {a:10, b:20}, ampClientAnswer, errorHandler );
+			ampClient.ask( 'Sum', {a:50, b:10}, ampClientAnswer, errorHandler );
+			ampClient.ask( 'Sum', {a:15, b:30}, ampClientAnswer, errorHandler );
+			ampClient.ask( 'Sum', {a:10, b:2}, ampClientAnswer, errorHandler );
+		}
+		
+		private function ampClientAnswer( object : Object ) : void{
+			trace( "Total:", object.total ); 
+		}
+		
+		private function errorHandler( object : Object ) : void{
+			trace( "Error Code:", object._error_code ); 
 		}
 		
 	}
