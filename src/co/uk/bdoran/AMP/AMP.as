@@ -7,7 +7,7 @@ package co.uk.bdoran.AMP {
 	import flash.net.Socket;
 	import flash.utils.Dictionary;
 
-	public class AMPClient extends EventDispatcher{
+	public class AMP extends EventDispatcher{
 		
 		private var server : String;
 		private var port : int;
@@ -19,9 +19,12 @@ package co.uk.bdoran.AMP {
 		private var questionCallbacks : Dictionary;
 		private var errorCallbacks : Dictionary;
 		
-		public function AMPClient( server : String, port : int ) {
+		private var commandResponders : Dictionary;
+		
+		public function AMP( server : String, port : int ) {
 			this.questionCallbacks = new Dictionary();
 			this.errorCallbacks = new Dictionary();
+			this.commandResponders = new Dictionary();
 			this.server = server;
 			this.port = port;
 			this.connect();
@@ -37,12 +40,16 @@ package co.uk.bdoran.AMP {
 			this.socket.addEventListener( ProgressEvent.SOCKET_DATA, socketDataHandler );
 		}
 		
-		public function ask( command : String, args : Object, callBack : Function = null, errorBack : Function = null ) : void{
+		public function callRemote( commandClass : Class, args : Object, callBack : Function = null, errorBack : Function = null ) : void{
+			
+			var command : AmpCommand = new commandClass();
+			
+			//TODO - Check parameter mapping and map the params properly
 			
 			var data : String = "";
 			var argsArray : Array = this.objectToArray( args );
 
-			argsArray.push( { key : "_command", value : command } );
+			argsArray.push( { key : "_command", value : command.getCommandName() } );
 			
 			if( callBack != null ){
 				this.questionCounter++;
@@ -60,8 +67,9 @@ package co.uk.bdoran.AMP {
 			socket.flush();
 		}
 		
-		public function call( command : String, args : Object ) : void{
-			this.ask( command, args, null );
+		public function setResponder( commandClass : Class, responder : Function ) : void {
+			var command : AmpCommand = new commandClass();
+			commandResponders[ command.getCommandName() ] = { command : commandClass, responder : responder }; 
 		}
 		
 		private function objectToArray( args : Object ) : Array{
@@ -85,8 +93,7 @@ package co.uk.bdoran.AMP {
 			this.dispatchEvent( new AMPEvent( AMPEvent.AMP_SOCKET_ERROR, this ) );
 		}
 		
-		
-		protected function socketSecurityErrorHandler(event:SecurityErrorEvent):void{
+		private function socketSecurityErrorHandler(event:SecurityErrorEvent):void{
 			this.dispatchEvent( new AMPEvent( AMPEvent.AMP_SECURITY_SOCKET_ERROR, this ) );
 		}
 
@@ -97,7 +104,7 @@ package co.uk.bdoran.AMP {
 			while ( socket.bytesAvailable > 0 ){
 				var message : String = socket.readUTF();
 				if( message == "" ){
-					processAnswer( responseItems );
+					processBox( responseItems );
 					responseItems = new Dictionary();
 				}
 				if( !key ){
@@ -109,39 +116,72 @@ package co.uk.bdoran.AMP {
 			}
 		}
 		
-		private function processAnswer( responseItems : Dictionary ) : void{
+		private function processBox( responseItems : Dictionary ) : void{
+			
+			for( var key : String in responseItems ){
+				trace( "Key:", key, "Value:", responseItems[key] );					
+			}
 
 			if( responseItems["_answer"] ){
-				var questionID : String = responseItems["_answer"];
-				delete( responseItems["_answer"] );
-				if( questionCallbacks[ questionID ] ){
-					var args : Object = new Object();
-					for( var aKey : String in responseItems ){
-						args[ aKey ] = responseItems[ aKey ];					
-					}
-					var callBack : Function = questionCallbacks[ questionID ] as Function; 
-					callBack.call( this, args );
-					delete( questionCallbacks[ questionID ] );
-				}
-				if( errorCallbacks[ questionID ] ){
-					delete( errorCallbacks[ questionID ] );
-				}
+				processAnswer( responseItems );
+			}
+			
+			if( responseItems["_command"] ){
+				processCommand( responseItems );
 			}
 			
 			if( responseItems["_error"] ){
-				var errorID : String = responseItems["_error"];
-				delete( responseItems["_error"] );
-				if( errorCallbacks[ errorID ] ){
-					var errorArgs : Object = new Object();
-					for( var eKey : String in responseItems ){
-						errorArgs[ eKey ] = responseItems[ eKey ];					
-					}
-					var errorBack : Function = errorCallbacks[ errorID ] as Function; 
-					errorBack.call( this, errorArgs );
-					delete( errorCallbacks[ errorID ] );
+				processError( responseItems );
+			}
+		}
+		
+		private function processAnswer( responseItems : Dictionary ) : void {
+			var questionID : String = responseItems["_answer"];
+			delete( responseItems["_answer"] );
+			if( questionCallbacks[ questionID ] ){
+				//TODO - Map params to names based on command
+				var args : Object = new Object();
+				for( var aKey : String in responseItems ){
+					args[ aKey ] = responseItems[ aKey ];					
 				}
-				if( questionCallbacks[ errorID ] ){
-					delete( questionCallbacks[ errorID ] );
+				var callBack : Function = questionCallbacks[ questionID ] as Function; 
+				callBack.call( this, args );
+				delete( questionCallbacks[ questionID ] );
+			}
+			if( errorCallbacks[ questionID ] ){
+				delete( errorCallbacks[ questionID ] );
+			}
+		}
+		
+		private function processError( responseItems : Dictionary ) : void{
+			var errorID : String = responseItems["_error"];
+			delete( responseItems["_error"] );
+			if( errorCallbacks[ errorID ] ){
+				var errorArgs : Object = new Object();
+				for( var eKey : String in responseItems ){
+					errorArgs[ eKey ] = responseItems[ eKey ];					
+				}
+				var errorBack : Function = errorCallbacks[ errorID ] as Function; 
+				errorBack.call( this, errorArgs );
+				delete( errorCallbacks[ errorID ] );
+			}
+			if( questionCallbacks[ errorID ] ){
+				delete( questionCallbacks[ errorID ] );
+			}
+		}
+		
+		private function processCommand( responseItems : Dictionary ) : void{
+			var commandName : String = responseItems["_command"];
+			delete( responseItems["_command"] );
+
+			var args : Object = new Object();
+			for( var aKey : String in responseItems ){
+				args[ aKey ] = responseItems[ aKey ];					
+			}
+			for( var command : String in this.commandResponders ){
+				if( command == commandName ){
+					var responder : Function = commandResponders[ command ].responder as Function;
+					responder.call( this, args );
 				}
 			}
 		}
