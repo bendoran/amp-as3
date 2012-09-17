@@ -15,7 +15,7 @@ package{
 			amp.addEventListener( AMPEvent.AMP_CONNECTED, ampConnectedHandler ) 
 		}
 		
-		private function ampConnectedHandler( event:AMPEvent ):void {event
+		private function ampConnectedHandler( event:AMPEvent ):void {
 			amp.callRemote( Sum, {a:10, b:20}, ampClientAnswer, errorHandler );
 			amp.callRemote( Sum, {a:50, b:10}, ampClientAnswer, errorHandler );
 			amp.callRemote( Sum, {a:15, b:30}, ampClientAnswer, errorHandler );

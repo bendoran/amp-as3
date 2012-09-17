@@ -1,8 +1,5 @@
-package co.uk.bdoran.AMP
-{
+package co.uk.bdoran.AMP {
 	import avmplus.getQualifiedClassName;
-	
-	import flash.utils.getDefinitionByName;
 
 	public class AmpCommand
 	{
@@ -19,8 +16,10 @@ package co.uk.bdoran.AMP
 		
 		public function getCommandName() : String{
 			var className : String = getQualifiedClassName( this ); 
-			var start:uint = className.indexOf( "::" ) + 2;
-			className = className.substring( start, className.length );
+			if( className.indexOf( "::" ) != -1 ){
+				var start:uint = className.indexOf( "::" ) + 2;
+				className = className.substring( start, className.length );
+			}
 			return className;
 		}
 	}
