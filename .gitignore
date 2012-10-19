@@ -9,3 +9,5 @@ bin-debug/*
 .DS_Store
 
 .pydevproject
+
+.flexLibProperties

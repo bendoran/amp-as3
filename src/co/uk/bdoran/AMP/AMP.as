@@ -27,7 +27,6 @@ package co.uk.bdoran.AMP {
 			this.commandResponders = new Dictionary();
 			this.server = server;
 			this.port = port;
-			this.connect();
 		}
 		
 		public function connect( ) : void{
@@ -41,7 +40,7 @@ package co.uk.bdoran.AMP {
 		}
 		
 		public function callRemote( commandClass : Class, args : Object, callBack : Function = null, errorBack : Function = null ) : void{
-			
+
 			var command : AmpCommand = new commandClass();
 			
 			//TODO - Check parameter mapping and map the params properly
@@ -81,19 +80,23 @@ package co.uk.bdoran.AMP {
 		}
 		
 		private function socketConnectHandler(event : Event) : void {
+			trace("[AMP] Socket Connected");
 			this.dispatchEvent( new AMPEvent( AMPEvent.AMP_CONNECTED, this ) );
 		}
 
 		private function socketCloseHandler(event : Event) : void {
+			trace("[AMP] Socket Closed");
 			this.dispatchEvent( new AMPEvent( AMPEvent.AMP_DISCONNECTED, this ) );
 			socket.close();
 		}
 
 		private function socketErrorHandler(event : IOErrorEvent) : void {
+			trace("[AMP] Socket Error");
 			this.dispatchEvent( new AMPEvent( AMPEvent.AMP_SOCKET_ERROR, this ) );
 		}
 		
 		private function socketSecurityErrorHandler(event:SecurityErrorEvent):void{
+			trace("[AMP] Socket Security Error");
 			this.dispatchEvent( new AMPEvent( AMPEvent.AMP_SECURITY_SOCKET_ERROR, this ) );
 		}
 
@@ -102,6 +105,7 @@ package co.uk.bdoran.AMP {
 			var key : String = null;
 			
 			while ( socket.bytesAvailable > 0 ){
+				trace("[AMP] Data Recieved:", message);
 				var message : String = socket.readUTF();
 				if( message == "" ){
 					processBox( responseItems );
