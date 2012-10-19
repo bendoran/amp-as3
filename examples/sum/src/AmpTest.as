@@ -6,11 +6,11 @@ package{
 	import flash.display.Sprite;
 	import flash.events.Event;
 	
-	public class Main extends Sprite{
+	public class AmpTest extends Sprite{
 		
 		private var amp:AMP;
 		
-		public function Main(){
+		public function AmpTest(){
 			amp = new AMP( "127.0.0.1", 6000 );
 			amp.addEventListener( AMPEvent.AMP_CONNECTED, ampConnectedHandler ) 
 		}
